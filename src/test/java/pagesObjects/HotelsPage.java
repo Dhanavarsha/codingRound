@@ -59,4 +59,9 @@ public class HotelsPage extends BasePage {
         searchButton.click();
         return createPageAndWaitForDisplay(driver, ResultsPage.class);
     }
+
+    public ResultsPage searchHotels1() {
+        searchButton.click();
+        return createPage(driver, ResultsPage.class);
+    }
 }

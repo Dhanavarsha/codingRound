@@ -89,4 +89,17 @@ public abstract class BasePage {
             return null;
         }
     }
+
+    static <T extends BasePage> T createPage(WebDriver driver, Class<T> pageClass) {
+        try {
+            Constructor<T> constructor = pageClass.getConstructor(WebDriver.class);
+            T newPage = constructor.newInstance(driver);
+            newPage.waitForPageDisplay();
+            return newPage;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Unable to create Page " + pageClass.getName());
+        }
+        return null;
+    }
 }
