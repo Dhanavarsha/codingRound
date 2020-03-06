@@ -8,9 +8,9 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.util.List;
 
 public class WaitUtils {
-    public WebDriverWait waitForElementsVisibility(List<WebElement> element, int duration, final WebDriver driver) {
+    public WebDriverWait waitForElementsVisibility(List<WebElement> elements, int duration, final WebDriver driver) {
         WebDriverWait wait = new WebDriverWait(driver, duration);
-        wait.until(ExpectedConditions.visibilityOfAllElements(element));
+        wait.until(ExpectedConditions.visibilityOfAllElements(elements));
         return wait;
     }
 
