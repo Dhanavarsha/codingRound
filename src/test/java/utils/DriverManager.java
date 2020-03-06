@@ -23,13 +23,13 @@ public class DriverManager {
     private Set<DriverEntry> driverPool;
     private static DriverManager driverManager = null;
 
-    private DriverManager(int threadCount) {
-        driverPool = new HashSet<>(threadCount);
+    private DriverManager(int totalDrivers) {
+        driverPool = new HashSet<>(totalDrivers);
     }
 
     public static DriverManager getInstance() {
         if (driverManager == null) {
-            driverManager = new DriverManager(getThreadCount());
+            driverManager = new DriverManager(getTotalDriversSupported());
         }
         return driverManager;
     }
@@ -39,7 +39,7 @@ public class DriverManager {
             WebDriver driver = getDriverInternal();
             if (driver != null) {
                 return driver;
-            } else if (getInstance().driverPool.size() < getThreadCount()) {
+            } else if (getInstance().driverPool.size() < getTotalDriversSupported()) {
                 return createWebDriver();
             } else {
                 sleep();
@@ -79,7 +79,7 @@ public class DriverManager {
     }
 
     public static void returnDriver(WebDriver webDriver) {
-        for (DriverEntry entry : DriverManager.getInstance().driverPool) {
+        for (DriverEntry entry : getInstance().driverPool) {
             if (entry.getDriver() == webDriver) {
                 assert entry.isAvailable() == false : "Cannot return a driver which is already available";
                 entry.toggleAvailability();
@@ -108,7 +108,12 @@ public class DriverManager {
 
     private static Map<String, Supplier<WebDriver>> browserCreator() {
         Map<String, Supplier<WebDriver>> browserCreator = new HashMap<>();
-        browserCreator.put("Chrome", () -> new ChromeDriver(getChromeOptions()));
+        browserCreator.put("Chrome", new Supplier<WebDriver>() {
+            @Override
+            public WebDriver get() {
+                return new ChromeDriver(getChromeOptions());
+            }
+        });
         browserCreator.put("Firefox", () -> new FirefoxDriver());
         browserCreator.put("RemoteWithChrome", () -> new RemoteWebDriver(getHubURL(), DesiredCapabilities.chrome()));
         browserCreator.put("RemoteWithFirefox", () -> new RemoteWebDriver(getHubURL(), DesiredCapabilities.firefox()));
@@ -124,7 +129,7 @@ public class DriverManager {
             throw new RuntimeException("Unknown browser type, supported types are:" + browserCreator().keySet());
         }
         WebDriver driver = driverSupplier.get();
-        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         getInstance().driverPool.add(new DriverEntry(driver, false));
         return driver;
     }
@@ -138,12 +143,12 @@ public class DriverManager {
         return options;
     }
 
-    private static int getThreadCount() {
+    private static int getTotalDriversSupported() {
         return 5;
     }
 
     public static void quitAllDrivers() {
-        for (DriverEntry entry : DriverManager.getInstance().driverPool) {
+        for (DriverEntry entry : getInstance().driverPool) {
             entry.getDriver().quit();
         }
     }
